@@ -2,7 +2,15 @@
 
 ## Overview
 
-This directory contains sample clinical documents for testing and development of the ClinChat-RAG system. These files represent the types of documents commonly found in clinical trials and pharmaceutical research.
+This directory contains comprehensive sample clinical datasets for testing and development of the ClinChat-RAG system. These files represent the types of documents commonly found in clinical trials and pharmaceutical research, now expanded to **5,000 rows each** for realistic performance testing.
+
+## Dataset Summary
+
+- **📊 Total Records**: 10,000+ clinical data points
+- **🧪 Lab Chemistry**: 5,000 rows across 16 different lab tests
+- **⚠️ Adverse Events**: 5,000 rows with comprehensive safety data
+- **👥 Patients**: 1,000+ synthetic patient records
+- **📅 Time Span**: 12 months of clinical data (2024)
 
 ## Document Types & Use Cases
 
@@ -44,47 +52,65 @@ This directory contains sample clinical documents for testing and development of
 - Find statistical significance
 - Extract patient demographics
 
-### 3. Laboratory Data (CSV)
+### 3. Laboratory Data (CSV) - **5,000 Records**
 **File Pattern**: `lab_data_*.csv`
 **Purpose**: Structured laboratory test results from clinical trials.
 
-**Sample File**: `lab_data_chemistry_panel.csv`
-**Columns Include**:
-- patient_id
-- visit_date
-- test_name
-- test_value
-- reference_range
-- units
-- abnormal_flag
-- lab_comments
+**Sample Files**: 
+- `lab_data_chemistry_panel_5k.csv` - **5,000 rows** (primary dataset)
+- `lab_data_chemistry_panel.csv` - 30 rows (small sample)
+
+**Comprehensive Lab Panel (16 Tests)**:
+- **Hematology**: Hemoglobin, WBC Count, Platelet Count
+- **Chemistry**: Creatinine, ALT, AST, Bilirubin, Alkaline Phosphatase
+- **Metabolic**: Glucose, BUN, Sodium, Potassium, Chloride, CO2
+- **Protein**: Albumin, Total Protein
+
+**Data Features**:
+- **312+ patients** with 1-3 visits each
+- **Realistic abnormal values** (~15% abnormality rate)
+- **Clinical comments** based on result interpretation
+- **Reference ranges** for all tests
+- **Temporal patterns** across multiple visits
 
 **Use Cases for RAG**:
-- Query specific lab values
-- Identify abnormal results
-- Track lab trends over time
+- Query specific lab values and trends
+- Identify abnormal results and patterns
+- Track patient lab evolution over time
 - Compare against reference ranges
+- Detect potential drug-lab interactions
+- Generate safety reports and summaries
 
-### 4. Adverse Events Data (CSV)
+### 4. Adverse Events Data (CSV) - **5,000 Records**
 **File Pattern**: `ae_data_*.csv`
-**Purpose**: Structured adverse event reporting data.
+**Purpose**: Structured adverse event reporting data for safety analysis.
 
-**Sample File**: `ae_data_safety_database.csv`
-**Columns Include**:
-- patient_id
-- ae_term
-- severity_grade
-- relationship_to_drug
-- start_date
-- end_date
-- serious_flag
-- outcome
+**Sample Files**: 
+- `ae_data_safety_database_5k.csv` - **5,000 rows** (primary dataset)
+- `ae_data_safety_database.csv` - 15 rows (small sample)
+
+**Comprehensive AE Data (11 Fields)**:
+- **Core Fields**: patient_id, ae_term, severity_grade, relationship_to_drug
+- **Temporal**: start_date, end_date, outcome
+- **Clinical**: serious_flag, action_taken
+- **Context**: concomitant_meds, medical_history
+
+**Rich Clinical Context**:
+- **50+ unique AE terms** (MedDRA-style terminology)
+- **CTCAE severity grading** (Grades 1-5)
+- **Causality assessment** (5-point scale)
+- **Clinical actions** based on severity
+- **Medical history** and concomitant medications
+- **Realistic outcomes** and temporal patterns
 
 **Use Cases for RAG**:
-- Query adverse event patterns
-- Assess drug safety profiles
-- Identify serious adverse events
-- Analyze causality relationships
+- Query adverse event patterns and frequencies
+- Assess drug safety profiles and risk factors
+- Identify serious adverse events and outcomes
+- Analyze causality relationships and dose modifications
+- Generate safety summaries and signal detection
+- Track AE resolution patterns and medical actions
+- Correlate with patient medical history and concomitant medications
 
 ### 5. Regulatory Submission Documents (PDF)
 **File Pattern**: `regulatory_*.pdf`
@@ -121,6 +147,24 @@ All sample files in this directory contain **SYNTHETIC DATA ONLY**. No real pati
 - **Medical Terms**: Based on public medical vocabularies (MedDRA, SNOMED CT)
 - **Regulatory Content**: Based on publicly available guidance documents
 
+## Dataset Statistics
+
+### Lab Chemistry Panel (5,000 rows)
+- **File Size**: ~597KB
+- **Patients**: 312 unique patients
+- **Time Span**: 365 days (2024)
+- **Tests per Patient**: 16 lab tests
+- **Abnormal Rate**: ~15% (realistic clinical distribution)
+- **Visit Pattern**: 1-3 visits per patient
+
+### Adverse Events (5,000 rows)
+- **File Size**: ~649KB
+- **Patients**: 1,000 unique patients
+- **AE Terms**: 50+ different adverse events
+- **Severity Distribution**: Weighted toward lower grades (1-2)
+- **Serious Events**: ~8% (realistic safety profile)
+- **Temporal Coverage**: Full year with resolution tracking
+
 ## File Validation
 
 Each sample file includes:
@@ -128,6 +172,7 @@ Each sample file includes:
 - **Metadata**: File size, creation date, document type
 - **Schema**: For structured data (CSV), includes column definitions
 - **Validation**: Data quality checks and compliance verification
+- **Generator Script**: `generate_clinical_data.py` for reproducibility
 
 ## Usage Instructions
 
