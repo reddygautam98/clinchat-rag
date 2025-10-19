@@ -1,0 +1,136 @@
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database & Vector Store
+psycopg2-binary==2.9.9
+pgvector==0.2.4
+chromadb==0.4.18
+pinecone-client==2.2.4
+redis==5.0.1
+
+# AI/ML Core
+openai==1.3.7
+anthropic==0.7.8
+langchain==0.0.340
+langchain-community==0.0.1
+sentence-transformers==2.2.2
+transformers==4.36.0
+torch==2.1.1
+
+# Document Processing
+pypdf2==3.0.1
+pymupdf==1.23.8
+python-docx==1.1.0
+openpyxl==3.1.2
+pandas==2.1.4
+numpy==1.25.2
+
+# OCR & Image Processing
+pytesseract==0.3.10
+pillow==10.1.0
+pdf2image==1.16.3
+
+# Text Processing & NLP
+spacy==3.7.2
+nltk==3.8.1
+beautifulsoup4==4.12.2
+html2text==2020.1.16
+
+# Medical/Clinical NLP
+scispacy==0.5.3
+medspacy==1.0.0
+
+# API & Web Framework
+httpx==0.25.2
+requests==2.31.0
+aiofiles==23.2.1
+python-multipart==0.0.6
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+cryptography==41.0.8
+
+# Configuration & Environment
+python-dotenv==1.0.0
+pyyaml==6.0.1
+toml==0.10.2
+
+# Monitoring & Logging
+prometheus-client==0.19.0
+structlog==23.2.0
+loguru==0.7.2
+
+# Data Validation & Quality
+great-expectations==0.18.8
+pandera==0.17.2
+cerberus==1.3.5
+
+# Async & Task Queue
+celery==5.3.4
+kombu==5.3.4
+flower==2.0.1
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2
+faker==20.1.0
+
+# Development Tools
+black==23.11.0
+isort==5.12.0
+flake8==6.1.0
+mypy==1.7.1
+pre-commit==3.6.0
+
+# Jupyter & Analysis
+jupyter==1.0.0
+ipython==8.18.1
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.17.0
+
+# UI Components (Prototype)
+streamlit==1.28.2
+gradio==4.7.1
+
+# Deployment & Infrastructure
+docker==6.1.3
+kubernetes==28.1.0
+gunicorn==21.2.0
+
+# Clinical/Regulatory Specific
+anonympy==0.3.8  # For PHI anonymization
+audit-log==1.1.0  # For compliance logging
+
+# Performance & Caching
+redis==5.0.1
+memcached==1.6.2
+cachetools==5.3.2
+
+# File Format Support
+xmltodict==0.13.0
+jsonschema==4.20.0
+marshmallow==3.20.1
+
+# Network & Communication
+websockets==12.0
+sse-starlette==1.8.2
+
+# Data Processing Pipeline
+apache-airflow==2.7.3  # Optional: for complex ETL workflows
+dask==2023.11.0  # For distributed computing
+
+# Compliance & Audit
+hashlib-compat==1.0.1
+audit-log==1.1.0
+
+# Production Dependencies
+supervisor==4.2.5
+nginx==1.25.3

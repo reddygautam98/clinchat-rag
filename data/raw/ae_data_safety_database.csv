@@ -1,0 +1,16 @@
+patient_id,ae_term,severity_grade,relationship_to_drug,start_date,end_date,serious_flag,outcome
+SYNTH001,Headache,1,Possibly Related,2024-01-16,2024-01-17,N,Resolved
+SYNTH001,Nausea,2,Probably Related,2024-01-16,2024-01-19,N,Resolved
+SYNTH002,Fatigue,1,Possibly Related,2024-01-17,2024-01-20,N,Resolved
+SYNTH002,Diarrhea,2,Probably Related,2024-01-18,2024-01-22,N,Resolved
+SYNTH002,Elevated ALT,3,Probably Related,2024-01-15,2024-02-01,Y,Resolved with treatment
+SYNTH003,Dizziness,1,Possibly Related,2024-01-18,2024-01-19,N,Resolved
+SYNTH004,Rash,2,Probably Related,2024-01-19,2024-01-25,N,Resolved
+SYNTH004,Mild Anemia,2,Possibly Related,2024-01-16,Ongoing,N,Ongoing
+SYNTH005,Insomnia,1,Unlikely Related,2024-01-20,2024-01-22,N,Resolved
+SYNTH006,Chest Pain,4,Unrelated,2024-01-21,2024-01-21,Y,Resolved - hospitalization required
+SYNTH006,Shortness of Breath,3,Unrelated,2024-01-21,2024-01-23,Y,Resolved
+SYNTH007,Joint Pain,2,Possibly Related,2024-01-22,2024-01-28,N,Resolved
+SYNTH008,Decreased Appetite,1,Probably Related,2024-01-23,2024-01-26,N,Resolved
+SYNTH009,Cough,1,Unrelated,2024-01-24,2024-01-30,N,Resolved
+SYNTH010,Hypotension,3,Probably Related,2024-01-25,2024-01-27,Y,Resolved with medication adjustment
