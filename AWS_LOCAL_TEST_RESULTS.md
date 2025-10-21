@@ -75,8 +75,8 @@ Configure at: https://github.com/reddygautam98/clinchat-rag/settings/secrets/act
 
 Add these repository secrets:
 ```
-AWS_ACCESS_KEY_ID = AKIAY24YPLC7UQI5QX2V
-AWS_SECRET_ACCESS_KEY = s4It/Ek76aTp1TgSm8qC6qjCpiLO7v9hS77xzWxs
+AWS_ACCESS_KEY_ID = [YOUR_ACCESS_KEY_ID]
+AWS_SECRET_ACCESS_KEY = [YOUR_SECRET_ACCESS_KEY]
 AWS_DEFAULT_REGION = us-east-1
 TF_STATE_BUCKET = clinchat-terraform-state-bucket
 ```
