@@ -33,14 +33,6 @@ jobs:
     - name: Install Python dependencies
       run: pip install boto3
 
-    - name: Create S3 bucket for Terraform state
-      run: python scripts/create_s3_bucket.py
-      env:
-        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
-        TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
-
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
@@ -48,12 +40,7 @@ jobs:
 
     - name: Terraform Init
       working-directory: infrastructure/
-      run: |
-        terraform init \
-          -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
-          -backend-config="key=terraform/state" \
-          -backend-config="region=${{ env.AWS_DEFAULT_REGION }}" \
-          -backend-config="dynamodb_table=terraform-state-lock"
+      run: terraform init
 
     - name: Terraform Validate
       working-directory: infrastructure/
