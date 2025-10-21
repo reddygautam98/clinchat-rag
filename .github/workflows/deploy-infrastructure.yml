@@ -1,0 +1,77 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  AWS_DEFAULT_REGION: us-east-1
+  TF_VERSION: 1.5.0
+
+jobs:
+  deploy:
+    name: Deploy AWS Infrastructure
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install Python dependencies
+      run: pip install boto3
+
+    - name: Create S3 bucket for Terraform state
+      run: python scripts/create_s3_bucket.py
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+        TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Terraform Init
+      working-directory: infrastructure/
+      run: |
+        terraform init \
+          -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+          -backend-config="key=terraform/state" \
+          -backend-config="region=${{ env.AWS_DEFAULT_REGION }}" \
+          -backend-config="dynamodb_table=terraform-state-lock"
+
+    - name: Terraform Validate
+      working-directory: infrastructure/
+      run: terraform validate
+
+    - name: Terraform Plan
+      working-directory: infrastructure/
+      run: terraform plan -out=tfplan
+
+    - name: Terraform Apply
+      working-directory: infrastructure/
+      run: terraform apply -auto-approve tfplan
+
+    - name: Output Results
+      working-directory: infrastructure/
+      run: |
+        echo "## 🚀 Infrastructure Deployment Complete!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        terraform output | while read line; do
+          echo "- $line" >> $GITHUB_STEP_SUMMARY
+        done

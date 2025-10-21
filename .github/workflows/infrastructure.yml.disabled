@@ -3,27 +3,12 @@ name: Infrastructure Deployment
 on:
   push:
     branches: [ main ]
-    paths: 
-      - 'infrastructure/**'
-      - '.github/workflows/infrastructure.yml'
-  pull_request:
-    branches: [ main ]
-    paths:
-      - 'infrastructure/**'
   workflow_dispatch:
     inputs:
-      environment:
-        description: 'Environment to deploy'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
       action:
         description: 'Action to perform'
         required: true
-        default: 'plan'
+        default: 'apply'
         type: choice
         options:
           - plan
