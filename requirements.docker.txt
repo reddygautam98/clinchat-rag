@@ -1,0 +1,89 @@
+# =============================================================================
+# ClinChat-RAG Docker Requirements
+# Optimized for containerized deployment with Google Gemini & Groq APIs
+# =============================================================================
+
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Database & ORM
+sqlalchemy==2.0.23
+alembic==1.13.1
+psycopg2-binary==2.9.9
+
+# Vector Stores
+chromadb==0.4.18
+pinecone-client==2.2.4
+
+# AI/ML APIs
+google-generativeai>=0.3.0
+groq>=0.4.0
+sentence-transformers>=2.2.0
+transformers>=4.30.0
+torch>=2.0.0
+
+# Document Processing
+pypdf2==3.0.1
+pymupdf==1.23.8
+python-docx==1.1.0
+openpyxl==3.1.2
+pandas==2.1.4
+numpy==1.25.2
+
+# OCR & Image Processing
+pytesseract==0.3.10
+pillow==10.1.0
+pdf2image==1.16.3
+
+# Text Processing & NLP
+spacy==3.7.2
+nltk==3.8.1
+beautifulsoup4==4.12.2
+
+# Medical/Clinical NLP
+scispacy==0.5.3
+
+# API & Web Framework
+httpx==0.25.2
+requests==2.31.0
+aiofiles==23.2.1
+python-multipart==0.0.6
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+cryptography>=41.0.0
+
+# Configuration
+python-dotenv==1.0.0
+pyyaml==6.0.1
+
+# Caching & Sessions
+redis==5.0.1
+cachetools==5.3.2
+
+# Monitoring & Metrics
+prometheus-client==0.19.0
+
+# Logging
+loguru==0.7.2
+
+# Data Validation
+jsonschema==4.20.0
+
+# Testing (Development only)
+pytest==7.4.3
+pytest-asyncio==0.21.1
+
+# Development Tools (Development only)
+black==23.11.0
+isort==5.12.0
+
+# Network & WebSockets
+websockets==12.0
+
+# Production Server
+gunicorn==21.2.0

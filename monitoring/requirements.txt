@@ -1,0 +1,20 @@
+# ClinChat-RAG Monitoring System Requirements
+# Additional dependencies for logging, monitoring & observability
+
+# Metrics and monitoring
+prometheus-client==0.18.0
+schedule==1.2.0
+
+# Encryption and security
+cryptography==41.0.7
+
+# Database and storage
+sqlite3  # Built-in with Python
+
+# Charts and visualization (for dashboard)
+# Note: Chart.js is loaded via CDN in the HTML dashboard
+
+# Optional: For advanced monitoring (uncomment if needed)
+# grafana-api==1.0.3
+# influxdb==5.3.1
+# elasticsearch==8.11.0

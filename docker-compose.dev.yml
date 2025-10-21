@@ -1,0 +1,34 @@
+# =============================================================================
+# Development Docker Compose Override
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.dev.yml up
+# =============================================================================
+
+services:
+  clinchat-rag:
+    build:
+      target: development
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - API_RELOAD=true
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - .:/app
+      - /app/.venv  # Prevent overriding virtual env
+    ports:
+      - "8002:8002"
+      - "8000:8000"  # Alternative port
+    command: ["python", "-m", "uvicorn", "api.fusion_api:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+
+  # Enable development database with immediate access
+  postgres:
+    environment:
+      POSTGRES_DB: clinchat_rag_dev
+      POSTGRES_USER: dev_user
+      POSTGRES_PASSWORD: dev_password
+    ports:
+      - "5433:5432"  # Different port for dev
+
+  redis:
+    command: redis-server --appendonly yes
+    # No password for development

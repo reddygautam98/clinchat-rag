@@ -1,0 +1,357 @@
+name: Infrastructure Deployment
+
+on:
+  push:
+    branches: [ main ]
+    paths: 
+      - 'infrastructure/**'
+      - '.github/workflows/infrastructure.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'infrastructure/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      action:
+        description: 'Action to perform'
+        required: true
+        default: 'plan'
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+
+env:
+  TF_VERSION: "1.5.0"
+  AWS_DEFAULT_REGION: us-east-1
+
+jobs:
+  # Terraform Security Scan
+  terraform-security:
+    name: Terraform Security Scan
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Install Checkov
+      run: |
+        pip install checkov
+        pip install tfsec
+
+    - name: Run Checkov security scan
+      run: |
+        checkov -d infrastructure/ --framework terraform --output json --output-file checkov-report.json || true
+        checkov -d infrastructure/ --framework terraform
+
+    - name: Run TFSec security scan
+      run: |
+        tfsec infrastructure/ --format json --out tfsec-report.json || true
+        tfsec infrastructure/
+
+    - name: Upload security scan results
+      uses: actions/upload-artifact@v3
+      with:
+        name: terraform-security-reports
+        path: |
+          checkov-report.json
+          tfsec-report.json
+
+  # Terraform Plan/Apply for Staging
+  terraform-staging:
+    name: Terraform Staging
+    runs-on: ubuntu-latest
+    needs: [terraform-security]
+    if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+    env:
+      TF_WORKSPACE: staging
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+    - name: Terraform Init
+      working-directory: infrastructure/
+      run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" -backend-config="key=staging/terraform.tfstate"
+
+    - name: Terraform Validate
+      working-directory: infrastructure/
+      run: terraform validate
+
+    - name: Terraform Format Check
+      working-directory: infrastructure/
+      run: terraform fmt -check=true -diff=true
+
+    - name: Terraform Plan
+      working-directory: infrastructure/
+      run: |
+        terraform plan -var-file="environments/staging.tfvars" -out=staging.tfplan
+        terraform show -json staging.tfplan > staging-plan.json
+
+    - name: Upload Terraform Plan
+      uses: actions/upload-artifact@v3
+      with:
+        name: terraform-staging-plan
+        path: infrastructure/staging.tfplan
+
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      working-directory: infrastructure/
+      run: terraform apply -auto-approve staging.tfplan
+
+    - name: Output Infrastructure Details
+      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      working-directory: infrastructure/
+      run: |
+        terraform output -json > staging-outputs.json
+        cat staging-outputs.json
+
+    - name: Update DNS Records
+      if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+      working-directory: infrastructure/
+      run: |
+        # Extract load balancer URL from Terraform outputs
+        LB_URL=$(terraform output -raw load_balancer_url)
+        # Update Route53 records or other DNS management
+        python ../scripts/update-dns.py --environment staging --url "$LB_URL"
+
+  # Terraform Plan/Apply for Production
+  terraform-production:
+    name: Terraform Production
+    runs-on: ubuntu-latest
+    needs: [terraform-security]
+    if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production'
+    environment:
+      name: production
+    env:
+      TF_WORKSPACE: production
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TF_VERSION }}
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_PROD }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_PROD }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+    - name: Terraform Init
+      working-directory: infrastructure/
+      run: terraform init -backend-config="bucket=${{ secrets.TF_STATE_BUCKET_PROD }}" -backend-config="key=production/terraform.tfstate"
+
+    - name: Terraform Validate
+      working-directory: infrastructure/
+      run: terraform validate
+
+    - name: Terraform Plan
+      working-directory: infrastructure/
+      run: |
+        terraform plan -var-file="environments/production.tfvars" -out=production.tfplan
+        terraform show -json production.tfplan > production-plan.json
+
+    - name: Manual Approval Required
+      if: github.event.inputs.action == 'apply'
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: platform-team,devops-team
+        minimum-approvals: 2
+        issue-title: "Production Infrastructure Deployment"
+        issue-body: |
+          Please review the Terraform plan for production infrastructure deployment.
+          
+          **Environment:** Production
+          **Action:** Apply
+          **Branch:** ${{ github.ref }}
+          **Commit:** ${{ github.sha }}
+          
+          Review the plan artifacts and approve if changes look correct.
+
+    - name: Terraform Apply
+      if: github.event.inputs.action == 'apply'
+      working-directory: infrastructure/
+      run: terraform apply -auto-approve production.tfplan
+
+    - name: Terraform Destroy Plan
+      if: github.event.inputs.action == 'destroy'
+      working-directory: infrastructure/
+      run: |
+        terraform plan -destroy -var-file="environments/production.tfvars" -out=destroy.tfplan
+
+    - name: Manual Approval for Destroy
+      if: github.event.inputs.action == 'destroy'
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.TOKEN }}
+        approvers: platform-team,cto
+        minimum-approvals: 2
+        issue-title: "🚨 CRITICAL: Production Infrastructure DESTROY"
+        issue-body: |
+          ⚠️ **WARNING: This will DESTROY production infrastructure!** ⚠️
+          
+          **Environment:** Production
+          **Action:** DESTROY
+          **Branch:** ${{ github.ref }}
+          **Commit:** ${{ github.sha }}
+          
+          This action is irreversible. Please ensure:
+          1. All data is backed up
+          2. All stakeholders are notified
+          3. This is intentional and approved by leadership
+          
+          Only approve if you are absolutely certain this should proceed.
+
+    - name: Terraform Destroy
+      if: github.event.inputs.action == 'destroy'
+      working-directory: infrastructure/
+      run: terraform apply -auto-approve destroy.tfplan
+
+    - name: Output Infrastructure Details
+      if: github.event.inputs.action == 'apply'
+      working-directory: infrastructure/
+      run: |
+        terraform output -json > production-outputs.json
+        cat production-outputs.json
+
+  # Post-deployment validation
+  infrastructure-validation:
+    name: Infrastructure Validation
+    runs-on: ubuntu-latest
+    needs: [terraform-staging]
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.11"
+
+    - name: Install validation tools
+      run: |
+        pip install boto3 requests pytest
+
+    - name: Download Terraform outputs
+      uses: actions/download-artifact@v3
+      with:
+        name: terraform-staging-outputs
+        path: ./
+
+    - name: Validate EKS cluster
+      run: |
+        python scripts/validate-eks-cluster.py --environment staging
+
+    - name: Validate RDS instance
+      run: |
+        python scripts/validate-rds.py --environment staging
+
+    - name: Validate OpenSearch cluster
+      run: |
+        python scripts/validate-opensearch.py --environment staging
+
+    - name: Validate Load Balancer
+      run: |
+        python scripts/validate-alb.py --environment staging
+
+    - name: Validate Security Groups
+      run: |
+        python scripts/validate-security-groups.py --environment staging
+
+    - name: Test network connectivity
+      run: |
+        python scripts/test-network-connectivity.py --environment staging
+
+    - name: Generate validation report
+      run: |
+        python scripts/generate-validation-report.py --environment staging --output validation-report.json
+
+    - name: Upload validation report
+      uses: actions/upload-artifact@v3
+      with:
+        name: infrastructure-validation-report
+        path: validation-report.json
+
+  # Disaster Recovery Testing
+  disaster-recovery-test:
+    name: Disaster Recovery Testing
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' # Run weekly
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+    - name: Test RDS backup restoration
+      run: |
+        python scripts/test-rds-backup-restore.py --environment staging
+
+    - name: Test EKS cluster backup
+      run: |
+        python scripts/test-eks-backup.py --environment staging
+
+    - name: Test OpenSearch snapshot restore
+      run: |
+        python scripts/test-opensearch-snapshot.py --environment staging
+
+    - name: Test cross-region failover
+      run: |
+        python scripts/test-cross-region-failover.py --environment staging
+
+    - name: Generate DR test report
+      run: |
+        python scripts/generate-dr-report.py --environment staging --output dr-test-report.json
+
+    - name: Upload DR test report
+      uses: actions/upload-artifact@v3
+      with:
+        name: disaster-recovery-test-report
+        path: dr-test-report.json
+
+    - name: Notify DR test results
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#clinchat-infrastructure'
+        text: "📋 ClinChat-RAG Disaster Recovery Test completed: ${{ job.status }}"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

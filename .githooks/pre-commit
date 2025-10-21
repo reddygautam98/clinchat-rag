@@ -1,0 +1,334 @@
+#!/usr/bin/env python3
+"""
+Pre-commit hook for ClinChat-RAG Medical AI System
+Performs comprehensive code quality, security, and compliance checks
+"""
+
+import os
+import sys
+import subprocess
+import re
+from pathlib import Path
+
+# ANSI color codes for output formatting
+class Colors:
+    GREEN = '\033[92m'
+    YELLOW = '\033[93m'
+    RED = '\033[91m'
+    BLUE = '\033[94m'
+    MAGENTA = '\033[95m'
+    CYAN = '\033[96m'
+    WHITE = '\033[97m'
+    BOLD = '\033[1m'
+    END = '\033[0m'
+
+def print_header(message):
+    print(f"\n{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.END}")
+    print(f"{Colors.BOLD}{Colors.BLUE}🏥 {message}{Colors.END}")
+    print(f"{Colors.BOLD}{Colors.BLUE}{'='*60}{Colors.END}")
+
+def print_success(message):
+    print(f"{Colors.GREEN}✅ {message}{Colors.END}")
+
+def print_warning(message):
+    print(f"{Colors.YELLOW}⚠️  {message}{Colors.END}")
+
+def print_error(message):
+    print(f"{Colors.RED}❌ {message}{Colors.END}")
+
+def print_info(message):
+    print(f"{Colors.CYAN}ℹ️  {message}{Colors.END}")
+
+def run_command(command, description, required=True):
+    """Run a shell command and return success status"""
+    try:
+        result = subprocess.run(
+            command, 
+            shell=True, 
+            capture_output=True, 
+            text=True
+        )
+        
+        if result.returncode == 0:
+            print_success(f"{description} - Passed")
+            if result.stdout.strip():
+                print(f"   {result.stdout.strip()}")
+            return True
+        else:
+            if required:
+                print_error(f"{description} - Failed")
+                print(f"   Error: {result.stderr.strip()}")
+            else:
+                print_warning(f"{description} - Failed (optional)")
+                print(f"   Warning: {result.stderr.strip()}")
+            return False
+            
+    except Exception as e:
+        if required:
+            print_error(f"{description} - Exception: {str(e)}")
+        else:
+            print_warning(f"{description} - Exception: {str(e)}")
+        return False
+
+def get_staged_files():
+    """Get list of staged files"""
+    try:
+        result = subprocess.run(
+            ['git', 'diff', '--cached', '--name-only'],
+            capture_output=True,
+            text=True
+        )
+        
+        if result.returncode == 0:
+            return [f.strip() for f in result.stdout.split('\n') if f.strip()]
+        return []
+    except:
+        return []
+
+def check_file_patterns(staged_files):
+    """Check for suspicious file patterns"""
+    print_header("MEDICAL DATA PROTECTION CHECK")
+    
+    # Patterns that should never be committed
+    dangerous_patterns = [
+        (r'.*\.key$', 'Private key files'),
+        (r'.*\.pem$', 'Certificate files'),  
+        (r'.*password.*', 'Password-related files'),
+        (r'.*secret.*', 'Secret files'),
+        (r'.*\.env$', 'Environment files (use .env.example instead)'),
+        (r'.*phi.*', 'Protected Health Information files'),
+        (r'.*patient.*data.*', 'Patient data files'),
+        (r'.*medical.*record.*', 'Medical record files'),
+    ]
+    
+    issues_found = False
+    
+    for pattern, description in dangerous_patterns:
+        for file in staged_files:
+            if re.match(pattern, file.lower()):
+                print_error(f"Dangerous file detected: {file} ({description})")
+                issues_found = True
+    
+    if not issues_found:
+        print_success("No dangerous file patterns detected")
+    
+    return not issues_found
+
+def check_secrets_in_content(staged_files):
+    """Check file contents for potential secrets"""
+    print_header("SECRET DETECTION IN CODE")
+    
+    # Common secret patterns
+    secret_patterns = [
+        (r'password\s*=\s*["\'][^"\']+["\']', 'Hardcoded password'),
+        (r'api[_-]?key\s*[=:]\s*["\'][^"\']+["\']', 'API key'),
+        (r'secret[_-]?key\s*[=:]\s*["\'][^"\']+["\']', 'Secret key'),
+        (r'aws[_-]?access[_-]?key\s*[=:]\s*["\'][^"\']+["\']', 'AWS access key'),
+        (r'sk-[a-zA-Z0-9]{20,}', 'OpenAI API key pattern'),
+        (r'ghp_[a-zA-Z0-9]{36}', 'GitHub personal access token'),
+    ]
+    
+    issues_found = False
+    
+    for file in staged_files:
+        if file.endswith(('.py', '.js', '.ts', '.yaml', '.yml', '.json', '.env')):
+            try:
+                with open(file, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
+                    
+                for pattern, description in secret_patterns:
+                    matches = re.finditer(pattern, content, re.IGNORECASE)
+                    for match in matches:
+                        line_num = content[:match.start()].count('\n') + 1
+                        print_error(f"{file}:{line_num} - {description}: {match.group()[:50]}...")
+                        issues_found = True
+                        
+            except Exception as e:
+                print_warning(f"Could not scan {file}: {str(e)}")
+    
+    if not issues_found:
+        print_success("No hardcoded secrets detected")
+    
+    return not issues_found
+
+def run_python_linting(staged_files):
+    """Run Python code quality checks"""
+    print_header("PYTHON CODE QUALITY")
+    
+    python_files = [f for f in staged_files if f.endswith('.py')]
+    
+    if not python_files:
+        print_info("No Python files to check")
+        return True
+    
+    all_passed = True
+    
+    # Run flake8 (if available)
+    if run_command('flake8 --version', 'Checking flake8 availability', required=False):
+        files_str = ' '.join(python_files)
+        if not run_command(f'flake8 --max-line-length=88 --ignore=E203,W503 {files_str}', 'Flake8 style check', required=False):
+            all_passed = False
+    
+    # Run black check (if available)
+    if run_command('black --version', 'Checking black availability', required=False):
+        files_str = ' '.join(python_files)
+        if not run_command(f'black --check --diff {files_str}', 'Black formatting check', required=False):
+            print_info("Run 'black .' to auto-format Python files")
+            all_passed = False
+    
+    # Run basic Python syntax check
+    for py_file in python_files:
+        if not run_command(f'python -m py_compile {py_file}', f'Python syntax check: {py_file}'):
+            all_passed = False
+    
+    return all_passed
+
+def run_javascript_linting(staged_files):
+    """Run JavaScript/TypeScript code quality checks"""
+    print_header("JAVASCRIPT CODE QUALITY")
+    
+    js_files = [f for f in staged_files if f.endswith(('.js', '.ts', '.jsx', '.tsx'))]
+    
+    if not js_files:
+        print_info("No JavaScript/TypeScript files to check")
+        return True
+    
+    all_passed = True
+    
+    # Run ESLint (if available)
+    if run_command('npx eslint --version', 'Checking ESLint availability', required=False):
+        files_str = ' '.join(js_files)
+        if not run_command(f'npx eslint {files_str}', 'ESLint check', required=False):
+            all_passed = False
+    
+    # Basic syntax check with Node.js
+    if run_command('node --version', 'Checking Node.js availability', required=False):
+        for js_file in js_files:
+            if not run_command(f'node --check {js_file}', f'JavaScript syntax check: {js_file}', required=False):
+                all_passed = False
+    
+    return all_passed
+
+def check_medical_compliance():
+    """Check for HIPAA and medical compliance requirements"""
+    print_header("MEDICAL COMPLIANCE CHECK")
+    
+    all_passed = True
+    
+    # Check for required compliance files
+    required_files = [
+        'PRIVACY_POLICY.md',
+        'HIPAA_COMPLIANCE.md', 
+        'SECURITY_POLICY.md'
+    ]
+    
+    for req_file in required_files:
+        if not os.path.exists(req_file):
+            print_warning(f"Missing compliance file: {req_file}")
+            all_passed = False
+        else:
+            print_success(f"Found compliance file: {req_file}")
+    
+    # Check for data encryption in database configs
+    config_files = ['config.py', 'settings.py', 'database.py']
+    encryption_found = False
+    
+    for config_file in config_files:
+        if os.path.exists(config_file):
+            try:
+                with open(config_file, 'r') as f:
+                    content = f.read().lower()
+                    if 'encrypt' in content or 'ssl' in content or 'tls' in content:
+                        encryption_found = True
+                        break
+            except:
+                pass
+    
+    if encryption_found:
+        print_success("Database encryption configuration found")
+    else:
+        print_warning("No database encryption configuration detected")
+        all_passed = False
+    
+    return all_passed
+
+def check_docker_security(staged_files):
+    """Check Docker files for security best practices"""
+    print_header("DOCKER SECURITY CHECK")
+    
+    docker_files = [f for f in staged_files if 'dockerfile' in f.lower() or f == 'docker-compose.yml']
+    
+    if not docker_files:
+        print_info("No Docker files to check")
+        return True
+    
+    all_passed = True
+    
+    for docker_file in docker_files:
+        try:
+            with open(docker_file, 'r') as f:
+                content = f.read().lower()
+                
+            # Check for security issues
+            if 'user root' in content or 'user 0' in content:
+                print_warning(f"{docker_file}: Running as root user detected")
+                all_passed = False
+                
+            if '--privileged' in content:
+                print_error(f"{docker_file}: Privileged mode detected - security risk!")
+                all_passed = False
+                
+            if 'add --chown=root' in content:
+                print_warning(f"{docker_file}: Files owned by root detected")
+                all_passed = False
+                
+            print_success(f"Docker security check passed for {docker_file}")
+            
+        except Exception as e:
+            print_warning(f"Could not check {docker_file}: {str(e)}")
+    
+    return all_passed
+
+def main():
+    """Main pre-commit hook execution"""
+    print_header("CLINCHAT-RAG PRE-COMMIT VALIDATION")
+    
+    # Get staged files
+    staged_files = get_staged_files()
+    
+    if not staged_files:
+        print_info("No staged files found")
+        return 0
+    
+    print_info(f"Checking {len(staged_files)} staged files...")
+    
+    # Run all checks
+    checks = [
+        check_file_patterns(staged_files),
+        check_secrets_in_content(staged_files),
+        run_python_linting(staged_files),
+        run_javascript_linting(staged_files),
+        check_medical_compliance(),
+        check_docker_security(staged_files)
+    ]
+    
+    # Summary
+    print_header("PRE-COMMIT VALIDATION SUMMARY")
+    
+    failed_checks = len([check for check in checks if not check])
+    
+    if failed_checks == 0:
+        print_success("🎉 All pre-commit checks passed! Commit approved.")
+        return 0
+    else:
+        print_error(f"❌ {failed_checks} check(s) failed. Commit blocked.")
+        print_info("\n📋 To fix issues:")
+        print_info("1. Review the errors above")
+        print_info("2. Fix the identified issues") 
+        print_info("3. Stage your fixes: git add .")
+        print_info("4. Try committing again")
+        print_info("\n🚨 For emergencies, use: git commit --no-verify")
+        return 1
+
+if __name__ == "__main__":
+    sys.exit(main())

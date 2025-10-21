@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinChat-RAG Monitoring Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f5f7fa;
+            color: #2d3748;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            opacity: 0.9;
+            margin-top: 0.25rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .status-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-card h3 {
+            font-size: 0.9rem;
+            color: #718096;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .status-card .value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 0.25rem;
+        }
+
+        .status-card .change {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .change.positive {
+            color: #38a169;
+        }
+
+        .change.negative {
+            color: #e53e3e;
+        }
+
+        .change.neutral {
+            color: #718096;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chart-subtitle {
+            font-size: 0.8rem;
+            color: #718096;
+            font-weight: 400;
+        }
+
+        .chart-canvas {
+            position: relative;
+            height: 300px;
+        }
+
+        .alert {
+            background: #fed7d7;
+            color: #c53030;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #e53e3e;
+            margin-bottom: 1rem;
+        }
+
+        .alert.warning {
+            background: #fefcbf;
+            color: #d69e2e;
+            border-left-color: #f6e05e;
+        }
+
+        .alert.success {
+            background: #c6f6d5;
+            color: #2f855a;
+            border-left-color: #68d391;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        select, button {
+            padding: 0.5rem 1rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        button:hover {
+            background: #5a6fd8;
+            border-color: #5a6fd8;
+        }
+
+        select:focus, button:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 200px;
+            color: #718096;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .control-group {
+                justify-content: space-between;
+            }
+        }
+
+        /* Chart-specific styles */
+        .latency-chart {
+            border-left-color: #38a169;
+        }
+
+        .qps-chart {
+            border-left-color: #3182ce;
+        }
+
+        .error-chart {
+            border-left-color: #e53e3e;
+        }
+
+        .confidence-chart {
+            border-left-color: #d69e2e;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏥 ClinChat-RAG Monitoring Dashboard</h1>
+        <p>Real-time performance monitoring and analytics</p>
+    </div>
+
+    <div class="container">
+        <!-- Controls -->
+        <div class="controls">
+            <div class="control-group">
+                <label for="timeRange">Time Range:</label>
+                <select id="timeRange" aria-label="Select time range for dashboard data">
+                    <option value="1">Last Hour</option>
+                    <option value="6">Last 6 Hours</option>
+                    <option value="24" selected>Last 24 Hours</option>
+                    <option value="168">Last 7 Days</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <button onclick="refreshData()">🔄 Refresh</button>
+                <button onclick="exportData()">📊 Export</button>
+            </div>
+            <div class="control-group">
+                <span>Last Updated: <span id="lastUpdated">Never</span></span>
+            </div>
+        </div>
+
+        <!-- Status Cards -->
+        <div class="status-bar">
+            <div class="status-card">
+                <h3>Total Queries</h3>
+                <div class="value" id="totalQueries">-</div>
+                <div class="change neutral" id="queriesChange">-</div>
+            </div>
+            <div class="status-card">
+                <h3>Success Rate</h3>
+                <div class="value" id="successRate">-</div>
+                <div class="change neutral" id="successChange">-</div>
+            </div>
+            <div class="status-card">
+                <h3>Avg Latency</h3>
+                <div class="value" id="avgLatency">-</div>
+                <div class="change neutral" id="latencyChange">-</div>
+            </div>
+            <div class="status-card">
+                <h3>Current QPS</h3>
+                <div class="value" id="currentQPS">-</div>
+                <div class="change neutral" id="qpsChange">-</div>
+            </div>
+            <div class="status-card">
+                <h3>Hallucination Flags</h3>
+                <div class="value" id="hallucinationFlags">-</div>
+                <div class="change neutral" id="hallucinationChange">-</div>
+            </div>
+            <div class="status-card">
+                <h3>Avg Confidence</h3>
+                <div class="value" id="avgConfidence">-</div>
+                <div class="change neutral" id="confidenceChange">-</div>
+            </div>
+        </div>
+
+        <!-- Alerts -->
+        <div id="alerts"></div>
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <!-- Latency Chart -->
+            <div class="chart-container latency-chart">
+                <div class="chart-title">
+                    Response Latency
+                    <span class="chart-subtitle">P50, P95, P99 percentiles</span>
+                </div>
+                <div class="chart-canvas">
+                    <canvas id="latencyChart"></canvas>
+                </div>
+            </div>
+
+            <!-- QPS Chart -->
+            <div class="chart-container qps-chart">
+                <div class="chart-title">
+                    Queries Per Second
+                    <span class="chart-subtitle">Requests over time</span>
+                </div>
+                <div class="chart-canvas">
+                    <canvas id="qpsChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Error Rate Chart -->
+            <div class="chart-container error-chart">
+                <div class="chart-title">
+                    Error Rate
+                    <span class="chart-subtitle">Failed requests percentage</span>
+                </div>
+                <div class="chart-canvas">
+                    <canvas id="errorChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Confidence Distribution -->
+            <div class="chart-container confidence-chart">
+                <div class="chart-title">
+                    Confidence Score Distribution
+                    <span class="chart-subtitle">Response confidence levels</span>
+                </div>
+                <div class="chart-canvas">
+                    <canvas id="confidenceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>ClinChat-RAG Monitoring Dashboard | Real-time medical AI system observability</p>
+    </div>
+
+    <script src="dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+# 🏥 ClinChat-RAG Medical AI System - Commit Template
+#
+# Format: <type>(<scope>): <description>
+#
+# Types:
+#   feat:     New feature for users or clinical functionality
+#   fix:      Bug fix for users or clinical issues  
+#   docs:     Documentation changes
+#   style:    Code formatting, missing semicolons, etc (no functional changes)
+#   refactor: Code changes that neither fix bugs nor add features
+#   test:     Adding or updating tests
+#   chore:    Maintenance tasks, dependency updates
+#   security: Security improvements or vulnerability fixes
+#   perf:     Performance improvements
+#   medical:  Medical domain-specific changes (algorithms, compliance)
+#   ui:       User interface changes
+#   api:      API changes or additions
+#   db:       Database schema or query changes
+#   docker:   Docker or containerization changes
+#   k8s:      Kubernetes deployment changes
+#   ci:       Continuous integration changes
+#
+# Scopes (examples):
+#   api, ui, nlp, database, embeddings, security, monitoring, 
+#   deployment, docker, k8s, docs, tests, config
+#
+# Examples:
+#   feat(nlp): add clinical named entity recognition for drug mentions
+#   fix(api): resolve timeout issue in RAG question-answering endpoint
+#   security(auth): implement RBAC for clinician access levels
+#   medical(compliance): add HIPAA audit logging for patient data access
+#   ui(dashboard): improve accessibility for screen readers
+#   docs(setup): update installation guide for medical environments
+#
+# Body (optional - explain WHAT and WHY, not HOW):
+# - What medical problem does this solve?
+# - Why is this change necessary for clinical workflows?
+# - Any HIPAA or compliance considerations?
+# - Breaking changes or migration notes
+#
+# Footer (optional):
+# Fixes: #123
+# Closes: #456  
+# BREAKING CHANGE: describe any breaking changes
+# Reviewed-by: Medical Director <email>
+# Tested-by: QA Team <email>
+#
+# Medical AI Commit Guidelines:
+# ✅ Include relevant medical context in commit messages
+# ✅ Reference clinical accuracy testing when applicable
+# ✅ Mention HIPAA compliance impacts if relevant
+# ✅ Include performance metrics for model changes
+# ✅ Document any changes affecting patient data handling
+# ✅ Reference clinical validation or medical review when needed
+#
+# Security Requirements:
+# 🔒 Never commit PHI (Protected Health Information)
+# 🔒 Never commit API keys, passwords, or credentials
+# 🔒 Always use environment variables for secrets
+# 🔒 Include security review for authentication changes
+#
+# Remember: This system handles medical data - accuracy and security are paramount!

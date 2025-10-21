@@ -1,0 +1,52 @@
+# =============================================================================
+# ClinChat-RAG Simple Docker Image
+# Production-ready containerized deployment
+# =============================================================================
+
+FROM python:3.11-slim AS base
+
+# System dependencies and create user
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    curl \
+    g++ \
+    gcc \
+    git \
+    libpq-dev \
+    poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --shell /bin/bash clinchat
+
+# Set working directory
+WORKDIR /app
+RUN chown clinchat:clinchat /app
+
+# ===== Dependencies Stage =====
+FROM base AS dependencies
+
+# Copy and install requirements, create data directory
+COPY requirements.minimal.txt ./requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt && \
+    mkdir -p /app/data && \
+    chown -R clinchat:clinchat /app/data
+
+# ===== Application Stage =====
+FROM dependencies AS application
+
+# Switch to non-root user
+USER clinchat
+
+# Copy application code
+COPY --chown=clinchat:clinchat . .
+
+# Expose port
+EXPOSE 8002
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8002/health || exit 1
+
+# Run application
+CMD ["uvicorn", "api.fusion_api:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "1"]

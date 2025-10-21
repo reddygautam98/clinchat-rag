@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClinChat-RAG Demo | Medical AI Assistant</title>
+    <meta name="description" content="Demo of AI-powered medical assistant for clinicians">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .hidden { display: none; }
+        .example-question-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin: 0.25rem 0;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            width: 100%;
+            text-align: left;
+            font: inherit;
+            color: inherit;
+        }
+        .example-question-btn:hover,
+        .example-question-btn:focus {
+            background-color: rgba(79, 172, 254, 0.1);
+            outline: 2px solid #4facfe;
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="app-header">
+            <div class="header-content">
+                <div>
+                    <h1>🏥 ClinChat-RAG</h1>
+                    <p>AI-Powered Clinical Assistant (Demo Mode)</p>
+                </div>
+                
+                <div class="status-indicator">
+                    <div class="status-dot offline"></div>
+                    <span class="status-text">Demo Mode</span>
+                </div>
+            </div>
+        </header>
+        
+        <main class="app-main">
+            <div class="container">
+                <!-- Query Section -->
+                <div class="query-section">
+                    <form class="query-form" onsubmit="handleDemoSubmit(event)">
+                        <div class="input-group">
+                            <label for="question" class="input-label">
+                                Clinical Question
+                            </label>
+                            <textarea
+                                id="question"
+                                placeholder="Enter your clinical question here... (e.g., 'What are the contraindications for metformin?')"
+                                class="question-input"
+                                rows="3"
+                            ></textarea>
+                        </div>
+                        
+                        <div class="options-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked>
+                                Use Hybrid Search (recommended)
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn" id="submitBtn">
+                            Ask ClinChat (Demo)
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Answer Section -->
+                <div id="answerSection" class="answer-section welcome">
+                    <div class="welcome-content">
+                        <h3>🏥 Welcome to ClinChat-RAG Demo</h3>
+                        <p>This is a demonstration of the clinician-facing interface. Try asking a medical question!</p>
+                        <div class="example-questions">
+                            <h4>Example Questions:</h4>
+                            <ul>
+                                <li><button type="button" class="example-question-btn" onclick="fillQuestion(this.textContent)">"What are the contraindications for metformin?"</button></li>
+                                <li><button type="button" class="example-question-btn" onclick="fillQuestion(this.textContent)">"How is acute myocardial infarction diagnosed?"</button></li>
+                                <li><button type="button" class="example-question-btn" onclick="fillQuestion(this.textContent)">"What are the side effects of warfarin?"</button></li>
+                                <li><button type="button" class="example-question-btn" onclick="fillQuestion(this.textContent)">"When should ACE inhibitors be discontinued?"</button></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sources Section (hidden initially) -->
+                <div id="sourcesSection" class="sources-section hidden">
+                    <div class="sources-header">
+                        <h3>📚 Supporting Sources</h3>
+                        <span class="sources-count">3 sources</span>
+                    </div>
+                    
+                    <div class="sources-list">
+                        <div class="source-item">
+                            <div class="source-header">
+                                <div class="source-info">
+                                    <span class="doc-id">📄 Clinical_Guidelines_2024.pdf</span>
+                                    <span class="page-number">Page 127</span>
+                                </div>
+                                <div class="relevance-score">
+                                    <span class="score-label">Relevance:</span>
+                                    <span class="score-value high">94%</span>
+                                </div>
+                            </div>
+                            <div class="source-content">
+                                <div class="source-snippet">
+                                    Metformin is contraindicated in patients with severe renal impairment (eGFR &lt; 30 mL/min/1.73m²), acute or chronic metabolic acidosis, and diabetic ketoacidosis. Additional contraindications include severe hepatic impairment and conditions predisposing to lactic acidosis.
+                                </div>
+                                <div class="source-metadata">
+                                    <span class="metadata-item">📍 Contraindications</span>
+                                    <span class="metadata-item">🏷️ Drug Reference</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="source-item">
+                            <div class="source-header">
+                                <div class="source-info">
+                                    <span class="doc-id">📄 FDA_Drug_Safety_2024.pdf</span>
+                                    <span class="page-number">Page 45</span>
+                                </div>
+                                <div class="relevance-score">
+                                    <span class="score-label">Relevance:</span>
+                                    <span class="score-value high">89%</span>
+                                </div>
+                            </div>
+                            <div class="source-content">
+                                <div class="source-snippet">
+                                    Before initiating metformin therapy, assess renal function and discontinue if eGFR falls below 30 mL/min/1.73m². Monitor patients with heart failure, as the risk of lactic acidosis may be increased in these populations.
+                                </div>
+                                <div class="source-metadata">
+                                    <span class="metadata-item">📍 Safety Information</span>
+                                    <span class="metadata-item">🏷️ FDA Guidelines</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="source-item">
+                            <div class="source-header">
+                                <div class="source-info">
+                                    <span class="doc-id">📄 Diabetes_Management_2024.pdf</span>
+                                    <span class="page-number">Page 89</span>
+                                </div>
+                                <div class="relevance-score">
+                                    <span class="score-label">Relevance:</span>
+                                    <span class="score-value medium">76%</span>
+                                </div>
+                            </div>
+                            <div class="source-content">
+                                <div class="source-snippet">
+                                    Metformin should be temporarily discontinued before major surgery, contrast imaging procedures, or any condition that may result in significant dehydration or hypoxemia due to increased risk of lactic acidosis.
+                                </div>
+                                <div class="source-metadata">
+                                    <span class="metadata-item">📍 Clinical Practice</span>
+                                    <span class="metadata-item">🏷️ Treatment Guidelines</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <footer class="app-footer">
+            <p>ClinChat-RAG Demo © 2024 | For demonstration purposes only</p>
+        </footer>
+    </div>
+
+    <script>
+        // Demo functionality
+        function fillQuestion(question) {
+            document.getElementById('question').value = question.replaceAll('"', '');
+        }
+
+        function handleDemoSubmit(event) {
+            event.preventDefault();
+            
+            const question = document.getElementById('question').value.trim();
+            if (!question) return;
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const answerSection = document.getElementById('answerSection');
+            const sourcesSection = document.getElementById('sourcesSection');
+            
+            // Show loading state
+            submitBtn.innerHTML = '<div class="spinner"></div> Processing...';
+            submitBtn.disabled = true;
+            
+            answerSection.className = 'answer-section loading';
+            answerSection.innerHTML = `
+                <div class="loading-content">
+                    <div class="spinner large"></div>
+                    <p>Analyzing clinical data...</p>
+                </div>
+            `;
+            
+            // Simulate API response delay
+            setTimeout(() => {
+                // Show demo answer
+                answerSection.className = 'answer-section';
+                answerSection.innerHTML = `
+                    <div class="answer-content">
+                        <div class="answer-header">
+                            <h3>📋 Clinical Answer (Demo)</h3>
+                            <div class="metadata">
+                                <span class="search-type">Hybrid Search</span>
+                                <span class="response-time">1.2s</span>
+                            </div>
+                        </div>
+                        
+                        <div class="answer-text">
+                            Based on current clinical guidelines, metformin is contraindicated in several important conditions:
+
+• Severe renal impairment (eGFR < 30 mL/min/1.73m²)
+• Acute or chronic metabolic acidosis, including diabetic ketoacidosis
+• Severe hepatic impairment
+• Conditions predisposing to lactic acidosis (severe heart failure, respiratory failure)
+• Acute illness with risk of dehydration
+
+Temporary discontinuation is recommended before major surgery, contrast procedures, or during acute illness that may compromise renal function. Regular monitoring of renal function is essential during metformin therapy.
+                        </div>
+                        
+                        <div class="confidence-indicator">
+                            <span class="confidence-label">Confidence:</span>
+                            <div class="confidence-bar confidence-high">
+                                <div class="confidence-fill" style="width: 92%"></div>
+                            </div>
+                            <span class="confidence-value">92%</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Show sources
+                sourcesSection.style.display = 'block';
+                
+                // Reset button
+                submitBtn.innerHTML = 'Ask ClinChat (Demo)';
+                submitBtn.disabled = false;
+                
+                // Scroll to answer
+                answerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+            }, 2000);
+        }
+        
+        // Add some interactive demo features
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🏥 ClinChat-RAG Demo UI Loaded');
+            console.log('📝 This is a demonstration interface showing UI capabilities');
+            console.log('🔗 To connect to the real API, use the main app.js file');
+        });
+    </script>
+</body>
+</html>

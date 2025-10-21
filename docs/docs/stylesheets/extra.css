@@ -1,0 +1,204 @@
+/* Custom styles for ClinChat-RAG documentation */
+
+/* Logo and branding enhancements */
+.md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  width: 2rem;
+  height: 2rem;
+}
+
+/* Medical-themed color enhancements */
+.md-typeset h1 {
+  color: #1976D2;
+}
+
+.md-typeset h2 {
+  color: #1565C0;
+  border-bottom: 2px solid #E3F2FD;
+  padding-bottom: 0.5rem;
+}
+
+/* Medical alert styling */
+.md-typeset .admonition.warning {
+  border-color: #FF9800;
+}
+
+.md-typeset .admonition.info {
+  border-color: #2196F3;
+}
+
+.md-typeset .admonition.tip {
+  border-color: #4CAF50;
+}
+
+/* Code block medical styling */
+.md-typeset .highlight .gp {
+  color: #1976D2;
+  font-weight: bold;
+}
+
+/* Medical badge styling */
+.medical-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  margin: 0.25rem;
+  background: linear-gradient(45deg, #2196F3, #1976D2);
+  color: white;
+  border-radius: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.medical-badge:hover {
+  background: linear-gradient(45deg, #1976D2, #0D47A1);
+  color: white;
+  text-decoration: none;
+}
+
+/* Role-based navigation styling */
+.md-tabs__item[aria-label*="Clinician"] {
+  background: linear-gradient(90deg, #E8F5E8, #F1F8E9);
+}
+
+.md-tabs__item[aria-label*="Administrator"] {
+  background: linear-gradient(90deg, #FFF3E0, #FFF8E1);
+}
+
+.md-tabs__item[aria-label*="Developer"] {
+  background: linear-gradient(90deg, #E3F2FD, #E8F5E8);
+}
+
+/* Medical disclaimer styling */
+.medical-disclaimer {
+  background: linear-gradient(135deg, #FFEBEE, #FCE4EC);
+  border-left: 4px solid #F44336;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0 0.25rem 0.25rem 0;
+}
+
+.medical-disclaimer::before {
+  content: "⚠️ Medical Disclaimer: ";
+  font-weight: bold;
+  color: #D32F2F;
+}
+
+/* Emergency contact styling */
+.emergency-contact {
+  background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+  border: 2px solid #F44336;
+  padding: 1rem;
+  margin: 1rem 0;
+  border-radius: 0.5rem;
+  text-align: center;
+}
+
+.emergency-contact::before {
+  content: "🚨 Emergency Support: ";
+  font-weight: bold;
+  color: #C62828;
+  font-size: 1.1rem;
+}
+
+/* Medical grid cards */
+.medical-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.medical-card {
+  background: linear-gradient(135deg, #F8F9FA, #E3F2FD);
+  border: 1px solid #2196F3;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.medical-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+}
+
+.medical-card h3 {
+  color: #1976D2;
+  margin-top: 0;
+}
+
+/* Clinical accuracy indicators */
+.accuracy-indicator {
+  display: inline-block;
+  padding: 0.125rem 0.5rem;
+  border-radius: 1rem;
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-left: 0.5rem;
+}
+
+.accuracy-high {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.accuracy-medium {
+  background-color: #FF9800;
+  color: white;
+}
+
+.accuracy-low {
+  background-color: #F44336;
+  color: white;
+}
+
+/* HIPAA compliance indicators */
+.hipaa-compliant::after {
+  content: " 🔒";
+  color: #4CAF50;
+}
+
+.phi-protected::after {
+  content: " 🛡️";
+  color: #2196F3;
+}
+
+/* Medical specialty tags */
+.specialty-tag {
+  display: inline-block;
+  padding: 0.125rem 0.375rem;
+  margin: 0.125rem;
+  background-color: #E3F2FD;
+  color: #1976D2;
+  border-radius: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  border: 1px solid #BBDEFB;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .medical-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .md-header__button.md-logo img,
+  .md-header__button.md-logo svg {
+    width: 1.5rem;
+    height: 1.5rem;
+  }
+}
+
+/* Print styles for medical documentation */
+@media print {
+  .medical-disclaimer,
+  .emergency-contact {
+    break-inside: avoid;
+  }
+  
+  .medical-card {
+    break-inside: avoid;
+    box-shadow: none;
+    border: 1px solid #ccc;
+  }
+}

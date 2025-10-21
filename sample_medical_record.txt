@@ -1,0 +1,65 @@
+MEDICAL RECORD
+
+Patient Name: John Smith
+DOB: 01/15/1980
+MRN: 123456789
+Date of Service: 03/20/2023
+
+CHIEF COMPLAINT:
+Patient presents with acute chest pain and shortness of breath that started 2 hours ago.
+
+HISTORY OF PRESENT ILLNESS:
+The patient is a 43-year-old male who developed sudden onset of chest pain while at work. The pain is described as sharp, stabbing, and located in the center of his chest. It is associated with shortness of breath and mild nausea. The patient denies any recent trauma, fever, or palpitations. He has no history of similar episodes.
+
+PAST MEDICAL HISTORY:
+- Hypertension diagnosed in 2018
+- Hyperlipidemia 
+- No known drug allergies
+- No previous hospitalizations
+
+SOCIAL HISTORY:
+The patient is a non-smoker and drinks alcohol occasionally. He works as an accountant and exercises regularly.
+
+FAMILY HISTORY:
+Father had myocardial infarction at age 55. Mother is alive with diabetes mellitus type 2.
+
+REVIEW OF SYSTEMS:
+Constitutional: Denies fever, chills, or weight loss
+Cardiovascular: Chest pain and shortness of breath as described above
+Respiratory: Mild dyspnea, no cough
+Gastrointestinal: Mild nausea, no vomiting
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 145/92, HR 98, RR 22, Temp 98.6°F, O2 Sat 96% on room air
+
+General: Alert and oriented, appears anxious but in no acute distress
+Cardiovascular: Regular rate and rhythm, no murmurs, gallops, or rubs
+Pulmonary: Clear to auscultation bilaterally, no wheezes or crackles
+Abdomen: Soft, non-tender, non-distended
+Extremities: No pedal edema, pulses intact
+
+DIAGNOSTIC TESTS:
+- ECG: Normal sinus rhythm, no ST changes
+- Chest X-ray: Clear lung fields, normal cardiac silhouette
+- Troponin I: 0.02 ng/mL (normal)
+- Complete metabolic panel: Within normal limits
+
+ASSESSMENT:
+Based on the clinical presentation and diagnostic workup, the patient likely has non-cardiac chest pain, possibly related to musculoskeletal strain or anxiety. Cardiac causes have been ruled out with normal ECG and troponin levels.
+
+PLAN:
+1. Discharge home with reassurance
+2. Ibuprofen 400mg every 6 hours as needed for pain
+3. Follow up with primary care physician in 1-2 days
+4. Return to ED if symptoms worsen or new symptoms develop
+5. Stress management and relaxation techniques recommended
+
+DISCHARGE MEDICATIONS:
+- Ibuprofen 400mg every 6 hours as needed for pain
+- Continue home medications for hypertension
+
+DISCHARGE INSTRUCTIONS:
+Patient educated about non-cardiac chest pain and when to seek emergency care. Advised to follow up with primary care physician and maintain stress management.
+
+Physician: Dr. Sarah Johnson, MD
+Date: 03/20/2023

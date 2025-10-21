@@ -1,0 +1,586 @@
+# ClinChat-RAG Medical AI System - Git Ignore Configuration
+# ==========================================================
+
+# ================================
+# SENSITIVE DATA & SECRETS
+# ================================
+# Environment variables and configuration files
+.env
+.env.*
+!.env.example
+!.env.docker
+
+# API Keys and credentials
+**/secrets/
+**/credentials/
+*.key
+*.pem
+*.p12
+*.pfx
+config/secrets.json
+config/credentials.json
+
+# Medical data (HIPAA compliance)
+**/protected_health_info/
+**/phi/
+**/medical_records/
+**/patient_data/
+**/clinical_data/
+data/raw/
+data/processed/
+data/phi/
+*.hl7
+*.dicom
+*.dcm
+
+# ================================
+# PYTHON
+# ================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+.pybuilder/
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# ================================
+# NODE.JS / NPM
+# ================================
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Grunt intermediate storage
+.grunt
+
+# Bower dependency directory
+bower_components
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Snowpack dependency directory
+web_modules/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional stylelint cache
+.stylelintcache
+
+# Microbundle cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# parcel-bundler cache
+.cache
+.parcel-cache
+
+# Next.js build output
+.next
+out
+
+# Nuxt.js build / generate output
+.nuxt
+dist
+
+# Gatsby files
+.cache/
+public
+
+# Storybook build outputs
+.out
+.storybook-out
+storybook-static
+
+# Temporary folders
+tmp/
+temp/
+
+# ================================
+# DOCKER
+# ================================
+# Docker files (keep Dockerfile and docker-compose.yml)
+.dockerignore
+docker-compose.override.yml
+
+# Container data
+volumes/
+**/docker-data/
+
+# ================================
+# DATABASES
+# ================================
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+
+# PostgreSQL
+*.dump
+*.sql
+
+# Database backups
+*.backup
+*.bak
+
+# Vector databases
+*.faiss
+*.index
+*.ann
+chroma_db/
+qdrant_storage/
+weaviate_data/
+
+# ================================
+# AI/ML SPECIFIC
+# ================================
+# Model files (large binaries)
+*.bin
+*.safetensors
+*.ckpt
+*.pth
+*.pt
+models/
+checkpoints/
+weights/
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+
+# Hugging Face cache
+.cache/huggingface/
+transformers_cache/
+
+# Embeddings and indices
+embeddings/
+indices/
+vector_store/
+
+# Training artifacts
+runs/
+logs/
+tensorboard_logs/
+wandb/
+mlruns/
+
+# Datasets (large files)
+datasets/
+raw_data/
+processed_data/
+
+# ================================
+# IDE & EDITORS
+# ================================
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# Local History for Visual Studio Code
+.history/
+
+# Built Visual Studio Code Extensions
+*.vsix
+
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*~
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ================================
+# OPERATING SYSTEM
+# ================================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+
+# Dump file
+*.stackdump
+
+# Folder config file
+[Dd]esktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Windows Installer files
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+
+# Windows shortcuts
+*.lnk
+
+# Linux
+*~
+
+# temporary files which can be created if a process still has a handle open of a deleted file
+.fuse_hidden*
+
+# KDE directory preferences
+.directory
+
+# Linux trash folder which might appear on any partition or disk
+.Trash-*
+
+# .nfs files are created when an open file is removed but is still being accessed
+.nfs*
+
+# ================================
+# TERRAFORM
+# ================================
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+# Exclude all .tfvars files, which are likely to contain sensitive data
+*.tfvars
+*.tfvars.json
+
+# Ignore override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Include override files you do wish to add to version control using negated pattern
+# !example_override.tf
+
+# Include tfplan files to ignore the plan output of command: terraform plan -out=tfplan
+*tfplan*
+
+# Ignore CLI configuration files
+.terraformrc
+terraform.rc
+
+# ================================
+# KUBERNETES
+# ================================
+# Helm
+charts/*.tgz
+
+# Kubernetes secrets
+**/k8s/**/secrets.yaml
+**/k8s/**/secret.yaml
+
+# ================================
+# CI/CD & MONITORING
+# ================================
+# GitHub Actions artifacts
+.github/workflows/artifacts/
+
+# Monitoring data
+monitoring_data/
+grafana_data/
+prometheus_data/
+
+# ================================
+# MEDICAL AI SPECIFIC
+# ================================
+# Clinical text samples (PHI)
+**/clinical_samples/
+**/phi_samples/
+**/test_patient_data/
+
+# NLP models and embeddings
+**/clinical_models/
+**/medical_embeddings/
+**/biobert_cache/
+
+# OCR temporary files
+ocr_temp/
+extracted_text/
+
+# Document processing cache
+doc_cache/
+pdf_cache/
+image_cache/
+
+# FAISS indices
+*.faiss
+faiss_indices/
+
+# ================================
+# TEMPORARY & CACHE FILES
+# ================================
+# General temporary files
+*.tmp
+*.temp
+.tmp/
+.temp/
+
+# Cache directories
+.cache/
+cache/
+__cache__/
+
+# Log files
+*.log
+logs/
+log/
+
+# Backup files
+*.bak
+*.backup
+*~
+*.orig
+
+# ================================
+# CUSTOM PROJECT FILES
+# ================================
+# Development environment
+development.env
+dev.env
+
+# Test data
+test_data/
+sample_data/
+mock_data/
+
+# Documentation builds
+docs/build/
+documentation/build/
+
+# Deployment artifacts
+deploy/
+deployment/artifacts/
+
+# Performance testing
+load_test_results/
+benchmark_results/
+
+# Security scanning results
+security_reports/
+vulnerability_scans/

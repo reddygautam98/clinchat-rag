@@ -1,0 +1,477 @@
+name: ClinChat-RAG CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, release/* ]
+  pull_request:
+    branches: [ main, develop ]
+  release:
+    types: [ published ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: clinchat-rag
+  PYTHON_VERSION: "3.11"
+  NODE_VERSION: "18"
+
+jobs:
+  # Security and Quality Gates
+  security-scan:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install security tools
+      run: |
+        pip install bandit safety semgrep
+        npm install -g audit-ci
+
+    - name: Run Bandit security scan
+      run: |
+        bandit -r . -f json -o bandit-report.json || true
+        bandit -r . -f txt
+
+    - name: Run Safety dependency check
+      run: |
+        pip freeze | safety check --stdin --json --output safety-report.json || true
+        pip freeze | safety check --stdin
+
+    - name: Run Semgrep SAST
+      run: |
+        semgrep --config=auto --json --output=semgrep-report.json . || true
+        semgrep --config=auto .
+
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json
+          semgrep-report.json
+
+    - name: Check security thresholds
+      run: |
+        # Fail build if high/critical vulnerabilities found
+        python scripts/check-security-thresholds.py
+
+  # Code Quality and Static Analysis
+  code-quality:
+    name: Code Quality Analysis
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pylint flake8 mypy black isort coverage
+
+    - name: Run Black code formatting check
+      run: |
+        black --check --diff .
+
+    - name: Run isort import sorting check
+      run: |
+        isort --check-only --diff .
+
+    - name: Run Flake8 linting
+      run: |
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --count --max-complexity=10 --max-line-length=127 --statistics
+
+    - name: Run Pylint analysis
+      run: |
+        pylint --output-format=json:pylint-report.json,text $(find . -name "*.py" | head -20) || true
+
+    - name: Run MyPy type checking
+      run: |
+        mypy --install-types --non-interactive --ignore-missing-imports . || true
+
+    - name: Upload code quality reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: code-quality-reports
+        path: |
+          pylint-report.json
+
+  # Unit and Integration Tests
+  test-suite:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-type: [unit, integration, security]
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: clinchat_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+
+    - name: Set up test environment
+      run: |
+        cp .env.test.example .env.test
+        export TESTING=true
+        export DATABASE_URL=postgresql://test:test@localhost:5432/clinchat_test
+
+    - name: Run unit tests
+      if: matrix.test-type == 'unit'
+      run: |
+        coverage run -m pytest tests/unit/ -v --junitxml=junit-unit.xml
+        coverage xml -o coverage-unit.xml
+        coverage report --fail-under=80
+
+    - name: Run integration tests
+      if: matrix.test-type == 'integration'
+      run: |
+        coverage run -m pytest tests/integration/ -v --junitxml=junit-integration.xml
+        coverage xml -o coverage-integration.xml
+
+    - name: Run security tests
+      if: matrix.test-type == 'security'
+      run: |
+        pytest tests/security/ -v --junitxml=junit-security.xml
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.test-type }}
+        path: |
+          junit-*.xml
+          coverage-*.xml
+
+    - name: Upload coverage to Codecov
+      if: matrix.test-type == 'unit'
+      uses: codecov/codecov-action@v3
+      with:
+        file: coverage-unit.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # Container Build and Security Scan
+  container-build:
+    name: Container Build & Scan
+    runs-on: ubuntu-latest
+    needs: [security-scan, code-quality, test-suite]
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=semver,pattern={{version}}
+          type=semver,pattern={{major}}.{{minor}}
+          type=sha
+
+    - name: Build container image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: false
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        outputs: type=docker,dest=/tmp/image.tar
+
+    - name: Load image for scanning
+      run: docker load --input /tmp/image.tar
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Trivy for high/critical vulnerabilities
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: ${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        format: 'table'
+        severity: 'HIGH,CRITICAL'
+        exit-code: '1'
+
+    - name: Push container image
+      if: github.event_name != 'pull_request'
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  # HIPAA Compliance Check
+  hipaa-compliance:
+    name: HIPAA Compliance Validation
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install compliance tools
+      run: |
+        pip install -r requirements.txt
+        pip install hipaa-compliance-checker
+
+    - name: Run PHI detection tests
+      run: |
+        python scripts/test-phi-detection.py
+
+    - name: Validate encryption configuration
+      run: |
+        python scripts/validate-encryption.py
+
+    - name: Check audit logging compliance
+      run: |
+        python scripts/validate-audit-logging.py
+
+    - name: Verify RBAC implementation
+      run: |
+        python scripts/validate-rbac.py
+
+    - name: Generate compliance report
+      run: |
+        python scripts/generate-compliance-report.py --output compliance-report.json
+
+    - name: Upload compliance report
+      uses: actions/upload-artifact@v3
+      with:
+        name: hipaa-compliance-report
+        path: compliance-report.json
+
+  # Performance Testing
+  performance-test:
+    name: Performance Testing
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+        pip install locust
+
+    - name: Run performance tests
+      run: |
+        locust --headless --users 100 --spawn-rate 10 --run-time 5m --host http://localhost:8000 -f tests/performance/locustfile.py
+
+    - name: Run load tests
+      run: |
+        python tests/performance/load_test.py
+
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      with:
+        name: performance-results
+        path: performance-*.json
+
+  # Deploy to Staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: [container-build, hipaa-compliance, performance-test]
+    if: github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://clinchat-rag-staging.example.com
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Deploy to staging
+      run: |
+        echo "Deploying to staging environment..."
+        # Integration with deployment tools (Kubernetes, Terraform, etc.)
+
+    - name: Run smoke tests
+      run: |
+        python scripts/smoke-tests.py --environment staging
+
+    - name: Notify deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: ${{ job.status }}
+        channel: '#clinchat-deployments'
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Deploy to Production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: [container-build, hipaa-compliance]
+    if: github.event_name == 'release' && github.event.action == 'published'
+    environment:
+      name: production
+      url: https://clinchat-rag.example.com
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v3
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Deploy to EKS
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name clinchat-rag-cluster
+        kubectl apply -f k8s/production/
+        kubectl set image deployment/clinchat-rag-api api=${{ env.REGISTRY }}/${{ github.repository }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+        kubectl rollout status deployment/clinchat-rag-api
+
+    - name: Run production smoke tests
+      run: |
+        python scripts/smoke-tests.py --environment production
+
+    - name: Update monitoring dashboards
+      run: |
+        python scripts/update-monitoring.py --version ${{ github.ref_name }}
+
+    - name: Notify successful deployment
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        channel: '#clinchat-production'
+        text: "🚀 ClinChat-RAG ${{ github.ref_name }} deployed to production successfully!"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+    - name: Create deployment record
+      run: |
+        python scripts/create-deployment-record.py --version ${{ github.ref_name }} --environment production
+
+  # Rollback on Failure
+  rollback-production:
+    name: Rollback Production
+    runs-on: ubuntu-latest
+    if: failure() && github.event_name == 'release'
+    needs: [deploy-production]
+    environment:
+      name: production
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: us-east-1
+
+    - name: Rollback deployment
+      run: |
+        aws eks update-kubeconfig --region us-east-1 --name clinchat-rag-cluster
+        kubectl rollout undo deployment/clinchat-rag-api
+        kubectl rollout status deployment/clinchat-rag-api
+
+    - name: Verify rollback
+      run: |
+        python scripts/smoke-tests.py --environment production
+
+    - name: Notify rollback
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        channel: '#clinchat-production'
+        text: "⚠️ ClinChat-RAG production deployment rolled back due to failure!"
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

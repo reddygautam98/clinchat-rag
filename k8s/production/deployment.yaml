@@ -1,0 +1,307 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: clinchat-rag
+  labels:
+    name: clinchat-rag
+    environment: production
+    hipaa-compliant: "true"
+    managed-by: terraform
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clinchat-rag-api
+  namespace: clinchat-rag
+  labels:
+    app: clinchat-rag-api
+    version: v1
+    environment: production
+spec:
+  replicas: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: clinchat-rag-api
+  template:
+    metadata:
+      labels:
+        app: clinchat-rag-api
+        version: v1
+        environment: production
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: clinchat-rag-api
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: api
+        image: ghcr.io/yourorg/clinchat-rag:v1.0.0
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        env:
+        - name: ENVIRONMENT
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: clinchat-rag-secrets
+              key: database-url
+        - name: OPENSEARCH_URL
+          valueFrom:
+            secretKeyRef:
+              name: clinchat-rag-secrets
+              key: opensearch-url
+        - name: GOOGLE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: clinchat-rag-secrets
+              key: google-api-key
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: clinchat-rag-secrets
+              key: groq-api-key
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: clinchat-rag-secrets
+              key: secret-key
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: clinchat-rag-secrets
+              key: encryption-key
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "200m"
+            ephemeral-storage: "1Gi"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+            ephemeral-storage: "2Gi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/cache
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      nodeSelector:
+        node-type: application
+      tolerations:
+      - key: "application"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - clinchat-rag-api
+              topologyKey: kubernetes.io/hostname
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clinchat-rag-api-service
+  namespace: clinchat-rag
+  labels:
+    app: clinchat-rag-api
+    environment: production
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: ""
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+spec:
+  type: LoadBalancer
+  selector:
+    app: clinchat-rag-api
+  ports:
+  - name: http
+    port: 80
+    targetPort: 8000
+    protocol: TCP
+  - name: https
+    port: 443
+    targetPort: 8000
+    protocol: TCP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: clinchat-rag-api
+  namespace: clinchat-rag
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/clinchat-rag-api-role
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: clinchat-rag
+  name: clinchat-rag-api-role
+rules:
+- apiGroups: [""]
+  resources: ["configmaps", "secrets"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: clinchat-rag-api-binding
+  namespace: clinchat-rag
+subjects:
+- kind: ServiceAccount
+  name: clinchat-rag-api
+  namespace: clinchat-rag
+roleRef:
+  kind: Role
+  name: clinchat-rag-api-role
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: clinchat-rag-ingress
+  namespace: clinchat-rag
+  annotations:
+    kubernetes.io/ingress.class: "alb"
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: ""
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+    alb.ingress.kubernetes.io/healthcheck-path: /health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
+    alb.ingress.kubernetes.io/wafv2-acl-arn: ""
+spec:
+  rules:
+  - host: clinchat-rag.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: clinchat-rag-api-service
+            port:
+              number: 80
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: clinchat-rag-secrets
+  namespace: clinchat-rag
+type: Opaque
+stringData:
+  database-url: "postgresql://username:password@rds-endpoint:5432/clinchat_rag"
+  opensearch-url: "https://opensearch-endpoint:443"
+  google-api-key: "REPLACE_WITH_ACTUAL_KEY"
+  groq-api-key: "REPLACE_WITH_ACTUAL_KEY"
+  secret-key: "REPLACE_WITH_ACTUAL_SECRET"
+  encryption-key: "REPLACE_WITH_ACTUAL_ENCRYPTION_KEY"
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: clinchat-rag-api-pdb
+  namespace: clinchat-rag
+spec:
+  minAvailable: 3
+  selector:
+    matchLabels:
+      app: clinchat-rag-api
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: clinchat-rag-api-hpa
+  namespace: clinchat-rag
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: clinchat-rag-api
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 25
+        periodSeconds: 60

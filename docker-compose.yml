@@ -1,0 +1,226 @@
+# =============================================================================
+# ClinChat-RAG Docker Compose Configuration
+# Unified Database System with Google Gemini & Groq APIs
+# =============================================================================
+
+services:
+  # =============================================================================
+  # Main Application - Fusion AI API with Database Integration
+  # =============================================================================
+  clinchat-rag:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: clinchat-fusion-api
+    restart: unless-stopped
+    ports:
+      - "8002:8002"  # Fusion AI API
+      - "9092:9090"  # Metrics (changed to avoid conflict with flowspark-prometheus)
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_TYPE=sqlite
+      - DATABASE_URL=sqlite:///./data/clinchat_fusion.db
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - clinchat_db:/app/data
+    networks:
+      - clinchat-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    depends_on:
+      - redis
+      - postgres
+
+  # =============================================================================
+  # Development Version (Alternative)
+  # =============================================================================
+  clinchat-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: clinchat-dev
+    restart: unless-stopped
+    ports:
+      - "8003:8002"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - API_RELOAD=true
+      - DATABASE_TYPE=sqlite
+      - DATABASE_URL=sqlite:///./data/clinchat_fusion_dev.db
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+    volumes:
+      - .:/app
+      - clinchat_dev_db:/app/data
+    networks:
+      - clinchat-network
+    profiles:
+      - development
+
+  # =============================================================================
+  # PostgreSQL Database (Production Option)
+  # =============================================================================
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: clinchat-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: clinchat_rag
+      POSTGRES_USER: clinchat_user
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-secure_password_123}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infra/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    ports:
+      - "5434:5432"  # Changed from 5433 to avoid conflict
+    networks:
+      - clinchat-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U clinchat_user -d clinchat_rag"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =============================================================================
+  # Redis Cache & Session Store
+  # =============================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: clinchat-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - clinchat-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_password_123}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # =============================================================================
+  # Chroma Vector Database
+  # =============================================================================
+  chroma:
+    image: ghcr.io/chroma-core/chroma:latest
+    container_name: clinchat-chroma
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    environment:
+      - CHROMA_SERVER_AUTHN_CREDENTIALS_FILE=/chroma/server.htpasswd
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.basic.BasicAuthServerProvider
+    volumes:
+      - chroma_data:/chroma/chroma
+      - ./infra/chroma-config:/chroma
+    networks:
+      - clinchat-network
+    # healthcheck:
+    #   test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/', timeout=5)\""]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 5
+    #   start_period: 30s
+
+  # =============================================================================
+  # Prometheus Monitoring
+  # =============================================================================
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: clinchat-prometheus
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./infra/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - clinchat-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    profiles:
+      - monitoring
+
+  # =============================================================================
+  # Grafana Dashboard
+  # =============================================================================
+  grafana:
+    image: grafana/grafana:latest
+    container_name: clinchat-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin123}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infra/grafana:/etc/grafana/provisioning
+    networks:
+      - clinchat-network
+    depends_on:
+      - prometheus
+    profiles:
+      - monitoring
+
+  # =============================================================================
+  # Nginx Reverse Proxy
+  # =============================================================================
+  nginx:
+    image: nginx:alpine
+    container_name: clinchat-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/nginx.conf:/etc/nginx/nginx.conf
+      - ./infra/ssl:/etc/nginx/ssl
+    networks:
+      - clinchat-network
+    depends_on:
+      - clinchat-rag
+    profiles:
+      - production
+
+# =============================================================================
+# Networks & Volumes
+# =============================================================================
+networks:
+  clinchat-network:
+    driver: bridge
+    name: clinchat-network
+
+volumes:
+  postgres_data:
+    name: clinchat_postgres_data
+  redis_data:
+    name: clinchat_redis_data
+  chroma_data:
+    name: clinchat_chroma_data
+  clinchat_db:
+    name: clinchat_sqlite_data
+  clinchat_dev_db:
+    name: clinchat_dev_sqlite_data
+  prometheus_data:
+    name: clinchat_prometheus_data
+  grafana_data:
+    name: clinchat_grafana_data

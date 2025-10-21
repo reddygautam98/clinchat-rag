@@ -1,0 +1,10 @@
+{
+  "index_type": "faiss",
+  "embedding_provider": "google_genai",
+  "embedding_model": "models/text-embedding-004",
+  "total_documents": 7,
+  "total_chunks": 17,
+  "created_at": "2025-10-19T15:30:00Z",
+  "version": "1.0.0",
+  "description": "ClinChat-RAG medical document vector index"
+}
