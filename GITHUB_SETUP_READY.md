@@ -12,8 +12,8 @@
 ```bash
 # Copy these EXACT values to your GitHub repository secrets:
 
-AWS_ACCESS_KEY_ID = AKIAY24YPLC7UTG7RIU2
-AWS_SECRET_ACCESS_KEY = h2kodtZHjv/p7eRksh52UHoOKkildRltK/xAA9t0
+AWS_ACCESS_KEY_ID = YOUR_AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = YOUR_AWS_SECRET_ACCESS_KEY
 AWS_DEFAULT_REGION = us-east-1
 TF_STATE_BUCKET = clinchat-terraform-state-bucket
 ```
@@ -29,11 +29,11 @@ TF_STATE_BUCKET = clinchat-terraform-state-bucket
 
 #### **Secret 1:**
 - Name: `AWS_ACCESS_KEY_ID`
-- Value: `AKIAY24YPLC7UTG7RIU2`
+- Value: `YOUR_AWS_ACCESS_KEY_ID`
 
 #### **Secret 2:**
 - Name: `AWS_SECRET_ACCESS_KEY`
-- Value: `h2kodtZHjv/p7eRksh52UHoOKkildRltK/xAA9t0`
+- Value: `YOUR_AWS_SECRET_ACCESS_KEY`
 
 #### **Secret 3:**
 - Name: `AWS_DEFAULT_REGION`

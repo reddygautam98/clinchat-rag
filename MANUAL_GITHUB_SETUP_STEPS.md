@@ -52,11 +52,11 @@ git push -u origin main
 ```bash
 # Secret 1
 Name: AWS_ACCESS_KEY_ID
-Value: AKIAY24YPLC7UTG7RIU2
+Value: YOUR_AWS_ACCESS_KEY_ID
 
 # Secret 2  
 Name: AWS_SECRET_ACCESS_KEY
-Value: h2kodtZHjv/p7eRksh52UHoOKkildRltK/xAA9t0
+Value: YOUR_AWS_SECRET_ACCESS_KEY
 
 # Secret 3
 Name: AWS_DEFAULT_REGION

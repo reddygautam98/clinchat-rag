@@ -77,7 +77,7 @@ Value: clinchat-terraform-state-bucket
 #### **SLACK_WEBHOOK** (Optional)
 ```
 Name: SLACK_WEBHOOK
-Value: https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX
+Value: https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK
 ```
 
 ---

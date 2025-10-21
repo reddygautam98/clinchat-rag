@@ -108,8 +108,8 @@ aws dynamodb describe-table --table-name terraform-state-lock
 ### **Phase 2: GitHub Secrets Configuration (10 minutes)**
 ```bash
 # Add these exact secrets to GitHub repository:
-AWS_ACCESS_KEY_ID = AKIAY24YPLC7UTG7RIU2
-AWS_SECRET_ACCESS_KEY = h2kodtZHjv/p7eRksh52UHoOKkildRltK/xAA9t0
+AWS_ACCESS_KEY_ID = YOUR_AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY = YOUR_AWS_SECRET_ACCESS_KEY
 TF_STATE_BUCKET = clinchat-terraform-state-bucket
 AWS_DEFAULT_REGION = us-east-1
 ```

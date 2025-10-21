@@ -39,10 +39,10 @@
 
 ```
 Secret Name: AWS_ACCESS_KEY_ID
-Secret Value: AKIAY24YPLC7UTG7RIU2
+Secret Value: YOUR_AWS_ACCESS_KEY_ID
 
 Secret Name: AWS_SECRET_ACCESS_KEY  
-Secret Value: h2kodtZHjv/p7eRksh52UHoOKkildRltK/xAA9t0
+Secret Value: YOUR_AWS_SECRET_ACCESS_KEY
 
 Secret Name: AWS_DEFAULT_REGION
 Secret Value: us-east-1
