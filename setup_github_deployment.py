@@ -16,10 +16,10 @@ def show_github_secrets_setup():
     print("You need to add these 4 secrets to your GitHub repository:")
     print("")
     print("1️⃣ AWS_ACCESS_KEY_ID")
-    print("   Value: AKIAY24YPLC7UQI5QX2V")
+    print("   Value: [Use your AWS Access Key ID]")
     print("")
     print("2️⃣ AWS_SECRET_ACCESS_KEY") 
-    print("   Value: s4It/Ek76aTp1TgSm8qC6qjCpiLO7v9hS77xzWxs")
+    print("   Value: [Use your AWS Secret Access Key]")
     print("")
     print("3️⃣ AWS_DEFAULT_REGION")
     print("   Value: us-east-1")
@@ -47,8 +47,8 @@ def show_github_secrets_setup():
     print("")
     
     secrets = [
-        ("AWS_ACCESS_KEY_ID", "AKIAY24YPLC7UQI5QX2V"),
-        ("AWS_SECRET_ACCESS_KEY", "s4It/Ek76aTp1TgSm8qC6qjCpiLO7v9hS77xzWxs"),
+        ("AWS_ACCESS_KEY_ID", "[Your AWS Access Key ID]"),
+        ("AWS_SECRET_ACCESS_KEY", "[Your AWS Secret Access Key]"),
         ("AWS_DEFAULT_REGION", "us-east-1"),
         ("TF_STATE_BUCKET", "clinchat-terraform-state-bucket")
     ]

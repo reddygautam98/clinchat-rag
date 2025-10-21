@@ -10,10 +10,10 @@ import os
 def check_aws_status():
     """Check current AWS infrastructure status"""
     
-    # AWS credentials
-    aws_access_key_id = "AKIAY24YPLC7UQI5QX2V"
-    aws_secret_access_key = "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"
-    aws_region = "us-east-1"
+    # AWS credentials - use environment variables or .env file
+    aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID')
+    aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    aws_region = os.environ.get('AWS_REGION', 'us-east-1')
     
     print("CHECKING AWS INFRASTRUCTURE STATUS")
     print("=" * 50)
