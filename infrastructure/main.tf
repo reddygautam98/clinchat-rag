@@ -23,11 +23,13 @@ terraform {
     }
   }
 
-  # Temporarily using local backend due to S3 access restrictions
-  # backend "s3" {
-  #   encrypt        = true
-  #   dynamodb_table = "terraform-state-lock"
-  # }
+  backend "s3" {
+    bucket         = "clinchat-terraform-state-bucket"
+    key            = "terraform/state"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-state-lock"
+    encrypt        = true
+  }
 }
 
 # Data sources for current AWS account and region
