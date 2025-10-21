@@ -11,8 +11,8 @@ def check_aws_status():
     """Check current AWS infrastructure status"""
     
     # AWS credentials
-    aws_access_key_id = "AKIAY24YPLC7UTG7RIU2"
-    aws_secret_access_key = "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" 
+    aws_access_key_id = "AKIAY24YPLC7UQI5QX2V"
+    aws_secret_access_key = "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"
     aws_region = "us-east-1"
     
     print("CHECKING AWS INFRASTRUCTURE STATUS")
