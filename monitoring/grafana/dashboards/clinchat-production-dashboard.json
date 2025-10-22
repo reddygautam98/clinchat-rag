@@ -1,0 +1,283 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ClinChat-RAG Production Dashboard",
+    "tags": ["clinchat", "production", "healthcare"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Overview",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "up{job=\"clinchat-backend\"}",
+            "legendFormat": "Backend Status"
+          },
+          {
+            "expr": "up{job=\"clinchat-frontend\"}",
+            "legendFormat": "Frontend Status"
+          },
+          {
+            "expr": "up{job=\"postgres\"}",
+            "legendFormat": "Database Status"
+          },
+          {
+            "expr": "up{job=\"redis\"}",
+            "legendFormat": "Cache Status"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "API Request Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"clinchat-backend\"}[5m])",
+            "legendFormat": "Requests/sec - {{method}} {{handler}}"
+          }
+        ],
+        "yAxes": [
+          {"label": "Requests/sec"},
+          {"show": false}
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8}
+      },
+      {
+        "id": 3,
+        "title": "Response Time Percentiles",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket{job=\"clinchat-backend\"}[5m]))",
+            "legendFormat": "50th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job=\"clinchat-backend\"}[5m]))",
+            "legendFormat": "95th percentile"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job=\"clinchat-backend\"}[5m]))",
+            "legendFormat": "99th percentile"
+          }
+        ],
+        "yAxes": [
+          {"label": "Response Time (seconds)"},
+          {"show": false}
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Active Users",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "clinchat_active_users",
+            "legendFormat": "Active Users"
+          },
+          {
+            "expr": "clinchat_active_sessions",
+            "legendFormat": "Active Sessions"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 16}
+      },
+      {
+        "id": 5,
+        "title": "Database Connections",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "postgresql_connections{job=\"postgres\"}",
+            "legendFormat": "Active Connections"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 50},
+                {"color": "red", "value": 80}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "Memory Usage",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes{job=\"clinchat-backend\"} / 1024 / 1024",
+            "legendFormat": "Backend Memory (MB)"
+          },
+          {
+            "expr": "postgresql_memory_usage{job=\"postgres\"} / 1024 / 1024",
+            "legendFormat": "Database Memory (MB)"
+          }
+        ],
+        "yAxes": [
+          {"label": "Memory (MB)"},
+          {"show": false}
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 7,
+        "title": "Error Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{job=\"clinchat-backend\",status=~\"4..|5..\"}[5m])",
+            "legendFormat": "Error Rate - {{status}}"
+          }
+        ],
+        "yAxes": [
+          {"label": "Errors/sec"},
+          {"show": false}
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [0.1], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "1m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "1m",
+          "frequency": "10s",
+          "handler": 1,
+          "name": "High Error Rate Alert",
+          "noDataState": "no_data",
+          "notifications": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "HIPAA Compliance Metrics",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "clinchat_audit_events_total",
+            "legendFormat": "Audit Events",
+            "format": "table"
+          },
+          {
+            "expr": "clinchat_phi_access_events",
+            "legendFormat": "PHI Access Events",
+            "format": "table"
+          },
+          {
+            "expr": "clinchat_failed_login_attempts",
+            "legendFormat": "Failed Logins",
+            "format": "table"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24}
+      },
+      {
+        "id": 9,
+        "title": "AI Model Performance",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "clinchat_ai_request_duration_seconds",
+            "legendFormat": "AI Response Time - {{model}}"
+          },
+          {
+            "expr": "rate(clinchat_ai_requests_total[5m])",
+            "legendFormat": "AI Requests/sec - {{model}}"
+          }
+        ],
+        "yAxes": [
+          {"label": "Response Time (seconds)"},
+          {"label": "Requests/sec", "side": "right"}
+        ],
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32}
+      },
+      {
+        "id": 10,
+        "title": "Cache Hit Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "clinchat_cache_hits / (clinchat_cache_hits + clinchat_cache_misses) * 100",
+            "legendFormat": "Cache Hit Rate %"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "unit": "percent",
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 70},
+                {"color": "green", "value": 90}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 20}
+      },
+      {
+        "id": 11,
+        "title": "Patient Data Volume",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "clinchat_patients_total",
+            "legendFormat": "Total Patients"
+          },
+          {
+            "expr": "clinchat_documents_processed_today",
+            "legendFormat": "Documents Today"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "palette-classic"},
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 20}
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "timepicker": {},
+    "timezone": "",
+    "title": "ClinChat-RAG Production Dashboard",
+    "uid": "clinchat-prod-dashboard",
+    "version": 1
+  }
+}
