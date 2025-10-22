@@ -162,8 +162,8 @@ This document outlines **ALL** permissions required to deploy, operate, and main
 
 ```yaml
 # AWS Authentication
-AWS_ACCESS_KEY_ID: "AKIAY24YPLC7UTG7RIU2"
-AWS_SECRET_ACCESS_KEY: "h2kodtZHjv/p7eRksh52UHoOKkildRltK/xAA9t0"
+AWS_ACCESS_KEY_ID: "YOUR_AWS_ACCESS_KEY_HERE"
+AWS_SECRET_ACCESS_KEY: "your_aws_secret_key_here"
 AWS_DEFAULT_REGION: "us-east-1"
 
 # Terraform Configuration  
@@ -256,7 +256,7 @@ BAA_Requirements:
 ```yaml
 API_Access:
   - Service: "Google AI Studio / Vertex AI"
-  - API_Key: "AIzaSyDud_JXcH9wHEhCixMfqcloQ1kench84Bg"
+  - API_Key: "your_google_api_key_here"
   - Model_Access: "gemini-2.0-flash"
   - Embedding_Model: "text-embedding-004"
   - Rate_Limits: "Standard tier limits"
@@ -271,7 +271,7 @@ Compliance:
 ```yaml
 API_Access:
   - Service: "Groq Cloud Platform"
-  - API_Key: "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"
+  - API_Key: "your_groq_api_key_here"
   - Model_Access: "llama-3.1-8b-instant"
   - Performance: "Ultra-fast inference speeds"
   

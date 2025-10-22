@@ -64,7 +64,7 @@ Tables: Users, Conversations, ClinicalDocuments, DocumentAnalysis,
 #### 1. **Security Vulnerabilities** - *Critical*
 ```properties
 # SECURITY ISSUE: Hardcoded AWS credentials in .env
-AWS_SECRET_ACCESS_KEY=s4It/Ek76aTp1TgSm8qC6qjCpiLO7v9hS77xzWxs  # 🚨 EXPOSED
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here  # 🚨 PLACEHOLDER
 ```
 **Risk Level**: **HIGH** - Immediate remediation required
 **Impact**: Potential AWS account compromise, data breach
@@ -178,7 +178,7 @@ interface ClinicalWorkflow {
 #### Critical (Immediate Fix Required)
 ```bash
 # 1. Exposed AWS Credentials
-AWS_SECRET_ACCESS_KEY=s4It/Ek76aTp1TgSm8qC6qjCpiLO7v9hS77xzWxs
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key_here
 
 # 2. Hardcoded Encryption Keys  
 ENCRYPTION_KEY=your_32_character_encryption_key_here

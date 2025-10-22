@@ -669,7 +669,7 @@ AWS Console Path: IAM → Users → clinchat-github-actions → Add permissions
 Actions:
 1. Remove AWSCompromisedKeyQuarantineV3 policy
 2. Create new access key pair
-3. Delete old compromised keys (AKIAY24YPLC7UTG7RIU2)
+3. Delete old compromised keys (YOUR_OLD_ACCESS_KEY_HERE)
 4. Update GitHub secrets with new keys
 ```
 

@@ -220,7 +220,7 @@ aws iam attach-user-policy \
 # Create New AWS Credentials:
 1. Go to: https://console.aws.amazon.com/iam/
 2. Navigate: Users → clinchat-github-actions → Security credentials
-3. Delete: Old access key (AKIAY24YPLC7UTG7RIU2)
+3. Delete: Old access key (YOUR_OLD_ACCESS_KEY_HERE)
 4. Create: New access key pair
 5. Save: New credentials securely
 ```

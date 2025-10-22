@@ -12,7 +12,7 @@ def display_github_secrets_info():
     print()
     
     secrets = {
-        "AWS_ACCESS_KEY_ID": "AKIAY24YPLC7UTG7RIU2",
+        "AWS_ACCESS_KEY_ID": "your_aws_access_key_here",
         "AWS_SECRET_ACCESS_KEY": "[REDACTED - See AWS_PENDING_WORK_OCTOBER_2025.md for full key]",
         "AWS_DEFAULT_REGION": "us-east-1", 
         "TF_STATE_BUCKET": "clinchat-terraform-state-bucket"

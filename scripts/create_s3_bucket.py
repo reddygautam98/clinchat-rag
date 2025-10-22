@@ -11,8 +11,8 @@ def create_s3_bucket():
     """Create S3 bucket for Terraform state if it doesn't exist"""
     
     # Get credentials from environment (set by GitHub Actions)
-    aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID', 'AKIAY24YPLC7UTG7RIU2')
-    aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY', 'h2kodtZHjv/p7eRksh52UHoOKkildRltK/xAA9t0')
+    aws_access_key_id = os.environ.get('AWS_ACCESS_KEY_ID', 'your_aws_access_key_here')
+    aws_secret_access_key = os.environ.get('AWS_SECRET_ACCESS_KEY', 'your_aws_secret_key_here')
     aws_region = os.environ.get('AWS_DEFAULT_REGION', 'us-east-1')
     bucket_name = os.environ.get('TF_STATE_BUCKET', 'clinchat-terraform-state-bucket')
     

@@ -37,8 +37,8 @@
 - **Status**: ❌ NOT CONFIGURED  
 - **Required Secrets**:
   ```
-  AWS_ACCESS_KEY_ID = AKIAY24YPLC7UTG7RIU2
-  AWS_SECRET_ACCESS_KEY = h2kodtZHjv/p7eRksh52UHoOKkildRltK/xAA9t0  
+  AWS_ACCESS_KEY_ID = YOUR_AWS_ACCESS_KEY_HERE
+  AWS_SECRET_ACCESS_KEY = your_aws_secret_key_here
   AWS_DEFAULT_REGION = us-east-1
   TF_STATE_BUCKET = clinchat-terraform-state-bucket
   ```

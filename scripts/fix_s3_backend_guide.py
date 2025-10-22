@@ -39,7 +39,7 @@ STEP 1: CREATE NEW AWS CREDENTIALS
     → SAVE the new credentials (you won't see them again!)
     
 1.5 Delete Old Access Key:
-    → Find the old access key: AKIAY24YPLC7UTG7RIU2
+    → Find the old access key: YOUR_OLD_ACCESS_KEY_HERE
     → Click "Delete"
     → Type "Delete" to confirm
 
@@ -91,7 +91,7 @@ If you have AWS CLI configured with admin access:
 
 1. Run: aws iam create-access-key --user-name clinchat-github-actions
 2. Copy new credentials to GitHub secrets
-3. Run: aws iam delete-access-key --user-name clinchat-github-actions --access-key-id AKIAY24YPLC7UTG7RIU2
+3. Run: aws iam delete-access-key --user-name clinchat-github-actions --access-key-id YOUR_OLD_ACCESS_KEY_HERE
 
 NEED HELP?
 ==========

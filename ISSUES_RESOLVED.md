@@ -30,8 +30,8 @@ The placeholder API keys in your .env file need to be replaced with real ones:
 
 ```bash
 # Current (placeholder keys):
-ANTHROPIC_API_KEY=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
-OPENAI_API_KEY=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
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+OPENAI_API_KEY=your_openai_api_key_here
 
 # Need to replace with real keys:
 ANTHROPIC_API_KEY=sk-ant-api03-YOUR_REAL_ANTHROPIC_KEY_HERE
